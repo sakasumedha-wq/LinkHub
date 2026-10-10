@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Profile | LinkHub</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0b0b12;
+            color: #f5f5fa;
+            padding: 25px 16px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        main {
+            max-width: 600px;
+            width: 100%;
+            margin: 35px auto;
+            background: #14141f;
+            padding: 32px;
+            border: 1px solid #343344;
+            border-radius: 18px;
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #b9a0ff;
+            margin-bottom: 28px;
+        }
+
+        .brand span {
+            color: white;
+        }
+
+        h1 {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 30px;
+            margin-bottom: 8px;
+            font-size: 19px;
+            color: #c5b4ff;
+        }
+
+        p {
+            color: #aaa8bb;
+            line-height: 1.7;
+        }
+
+        .subtitle {
+            margin-top: 0;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin: 20px 0 9px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            display: block;
+            width: 100%;
+            padding: 13px 14px;
+            background: #0b0b12;
+            color: white;
+            border: 1px solid #454158;
+            border-radius: 9px;
+            font: inherit;
+            font-size: 14px;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: 2px solid #9275ef;
+            border-color: #b9a0ff;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #777488;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .hint {
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .divider {
+            border: 0;
+            border-top: 1px solid #343344;
+            margin: 30px 0;
+        }
+
+        .save-button {
+            width: 100%;
+            margin-top: 28px;
+            padding: 15px;
+            background: linear-gradient(90deg, #b9a0ff, #a9b7ff);
+            color: #100d1c;
+            border: 0;
+            border-radius: 9px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .save-button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .back-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 25px;
+        }
+
+        a {
+            color: #b9a0ff;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            color: #ffb0b0;
+            background: #29171f;
+            padding: 12px;
+            border: 1px solid #59303a;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            main {
+                padding: 22px 18px;
+                margin: 15px auto;
+            }
+
+            h1 {
+                font-size: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<main>
+    <div class="brand">link<span>hub.</span></div>
+
+    <h1>Edit your profile</h1>
+    <p class="subtitle">
+        Keep your professional profile updated and showcase your work.
+    </p>
+
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <p class="error">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+        <h2>Personal Information</h2>
+        <p class="hint">Tell visitors who you are and what you do.</p>
+
+        <label for="name">Full name</label>
+        <input
+            type="text"
+            id="name"
+            name="name"
+            value="{{ user.name }}"
+            maxlength="80"
+            autocomplete="name"
+            required
+        >
+
+        <label for="role">Professional headline</label>
+        <input
+            type="text"
+            id="role"
+            name="role"
+            value="{{ user.role }}"
+            maxlength="100"
+            placeholder="e.g. AIML Student | Aspiring Developer"
+            required
+        >
+
+        <label for="bio">About me</label>
+        <textarea
+            id="bio"
+            name="bio"
+            maxlength="500"
+            placeholder="Write a short introduction about yourself..."
+            required
+        >{{ user.bio }}</textarea>
+
+        <hr class="divider">
+
+        <h2>Professional Links</h2>
+        <p class="hint">
+            Share your coding work and professional network.
+            Both links are optional.
+        </p>
+
+        <label for="github_url">GitHub Profile</label>
+        <input
+            type="url"
+            id="github_url"
+            name="github_url"
+            value="{{ user.github_url or '' }}"
+            placeholder="https://github.com/yourusername"
+            maxlength="300"
+        >
+
+        <label for="linkedin_url">LinkedIn Profile</label>
+        <input
+            type="url"
+            id="linkedin_url"
+            name="linkedin_url"
+            value="{{ user.linkedin_url or '' }}"
+            placeholder="https://www.linkedin.com/in/yourusername"
+            maxlength="300"
+        >
+
+        <button class="save-button" type="submit">
+            Save Changes
+        </button>
+    </form>
+
+    <div class="back-links">
+        <a href="{{ url_for('dashboard') }}">← Back to dashboard</a>
+
+        <a href="{{ url_for('public_profile', username=user.username) }}">
+            View public profile ↗
+        </a>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LinkHub — One link, your world</title>
+<style>
+body{margin:0;background:#0b0b12;color:#f5f5fa;font-family:Arial,sans-serif;display:grid;place-items:center;min-height:100vh;text-align:center;padding:20px;box-sizing:border-box}
+main{max-width:650px}
+.logo{font-size:34px;color:#b9a0ff;font-weight:bold}
+h1{font-size:clamp(36px,7vw,60px);margin:25px 0 15px}
+p{color:#aaa8bb;line-height:1.8}
+a{display:inline-block;text-decoration:none;padding:13px 22px;border-radius:9px;margin:12px 5px;font-weight:bold}
+.primary{background:#b9a0ff;color:#100d1c}
+.secondary{border:1px solid #454158;color:white}
+.flash{color:#ffb4b4}
+</style>
+</head>
+<body>
+<main>
+<div class="logo">linkhub.</div>
+<h1>Your world.<br>One <span style="color:#b9a0ff">link.</span></h1>
+<p>Create your own shareable page for your projects, resume,
+achievements and social links. All in one place.</p>
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}<p class="flash">{{ message }}</p>{% endfor %}
+{% endwith %}
+{% if user %}
+<a class="primary" href="{{ url_for('dashboard') }}">My Dashboard</a>
+{% else %}
+<a class="primary" href="{{ url_for('register') }}">Create Your Profile</a>
+<a class="secondary" href="{{ url_for('login') }}">Log In</a>
+{% endif %}
+</main>
+</body>
+</html>

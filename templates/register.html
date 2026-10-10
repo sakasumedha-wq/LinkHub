@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create Account | LinkHub</title>
+<style>
+body{font-family:Arial;background:#0b0b12;color:white;padding:25px}
+main{max-width:420px;margin:40px auto;background:#14141f;padding:28px;border:1px solid #343344;border-radius:16px}
+h1{color:#b9a0ff}p{color:#aaa8bb;line-height:1.6}
+label{display:block;margin:18px 0 8px}
+input{width:100%;box-sizing:border-box;padding:12px;background:#0b0b12;color:white;border:1px solid #454158;border-radius:8px}
+button{width:100%;margin-top:24px;padding:13px;background:#b9a0ff;border:0;border-radius:8px;font-weight:bold;cursor:pointer}
+a{color:#b9a0ff}.error{color:#ff9999}
+</style>
+</head>
+<body>
+<main>
+<h1>Create your LinkHub</h1>
+<p>Make your own profile and share it with the world.</p>
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}<p class="error">{{ message }}</p>{% endfor %}
+{% endwith %}
+<form method="POST">
+<label for="name">Full name</label>
+<input id="name" name="name" maxlength="80" required>
+<label for="username">Choose a username</label>
+<input id="username" name="username" minlength="3" maxlength="30"
+pattern="[A-Za-z0-9_]+" title="Letters, numbers and underscores only" required>
+<p>Your public link will be /u/yourusername</p>
+<label for="password">Password (at least 8 characters)</label>
+<input id="password" name="password" type="password" minlength="8" required>
+<button type="submit">Create Account</button>
+</form>
+<p>Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+<a href="{{ url_for('home') }}">← Home</a>
+</main>
+</body>
+</html>

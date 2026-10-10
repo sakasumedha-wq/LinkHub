@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log In | LinkHub</title>
+<style>
+body{font-family:Arial;background:#0b0b12;color:white;padding:25px}
+main{max-width:420px;margin:50px auto;background:#14141f;padding:28px;border:1px solid #343344;border-radius:16px}
+h1{color:#b9a0ff}p{color:#aaa8bb}
+label{display:block;margin:18px 0 8px}
+input{width:100%;box-sizing:border-box;padding:12px;background:#0b0b12;color:white;border:1px solid #454158;border-radius:8px}
+button{width:100%;margin-top:24px;padding:13px;background:#b9a0ff;border:0;border-radius:8px;font-weight:bold;cursor:pointer}
+a{color:#b9a0ff}.error{color:#ff9999}
+</style>
+</head>
+<body>
+<main>
+<h1>Welcome back</h1>
+<p>Log in to manage your LinkHub profile.</p>
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}<p class="error">{{ message }}</p>{% endfor %}
+{% endwith %}
+<form method="POST">
+<label for="username">Username</label>
+<input id="username" name="username" autocomplete="username" required>
+<label for="password">Password</label>
+<input id="password" name="password" type="password"
+autocomplete="current-password" required>
+<button type="submit">Log In</button>
+</form>
+<p>New here? <a href="{{ url_for('register') }}">Create an account</a></p>
+<a href="{{ url_for('home') }}">← Home</a>
+</main>
+</body>
+</html>

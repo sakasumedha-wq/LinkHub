@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard | LinkHub</title>
+<style>
+body{font-family:Arial;background:#0b0b12;color:white;padding:25px}
+main{max-width:650px;margin:40px auto}
+.card{background:#14141f;border:1px solid #343344;padding:24px;border-radius:15px;margin:18px 0}
+h1,h2{color:#b9a0ff}
+p{color:#aaa8bb;line-height:1.7}
+a{color:#b9a0ff}
+.button{display:inline-block;padding:12px 17px;background:#b9a0ff;color:#100d1c;text-decoration:none;border-radius:8px;font-weight:bold}
+button{background:transparent;color:#ffaaaa;border:1px solid #68404a;padding:10px 15px;border-radius:8px;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<h1>Your Dashboard ✦</h1>
+<p>Welcome, {{ user.name }}!</p>
+<div class="card">
+<h2>Your profile</h2>
+<p>Name: {{ user.name }}</p>
+<p>Username: @{{ user.username }}</p>
+<p>Role: {{ user.role }}</p>
+<p>{{ user.bio }}</p>
+<a class="button" href="{{ url_for('edit_profile') }}">Edit Profile</a>
+</div>
+<div class="card">
+<h2>Your public page</h2>
+<p>Share this link with friends, recruiters and teammates.</p>
+<p><a href="{{ url_for('public_profile', username=user.username) }}">
+{{ request.host_url }}u/{{ user.username }}</a></p>
+<a class="button" href="{{ url_for('public_profile', username=user.username) }}">View My Page</a>
+</div>
+<form method="POST" action="{{ url_for('logout') }}">
+<button type="submit">Log Out</button>
+</form>
+<p><a href="{{ url_for('home') }}">← Home</a></p>
+</main>
+</body>
+</html>
