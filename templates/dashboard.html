@@ -1,44 +1,1249 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard | LinkHub</title>
-<style>
-body{font-family:Arial;background:#0b0b12;color:white;padding:25px}
-main{max-width:650px;margin:40px auto}
-.card{background:#14141f;border:1px solid #343344;padding:24px;border-radius:15px;margin:18px 0}
-h1,h2{color:#b9a0ff}
-p{color:#aaa8bb;line-height:1.7}
-a{color:#b9a0ff}
-.button{display:inline-block;padding:12px 17px;background:#b9a0ff;color:#100d1c;text-decoration:none;border-radius:8px;font-weight:bold}
-button{background:transparent;color:#ffaaaa;border:1px solid #68404a;padding:10px 15px;border-radius:8px;cursor:pointer}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0717">
+    <title>Dashboard | LinkHub</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0b0717;
+            --card: #19122c;
+            --border: rgba(196,181,253,.2);
+            --text: #f8f5ff;
+            --muted: #aaa0c2;
+            --purple: #a78bfa;
+            --pink: #f0abfc;
+            --green: #86efac;
+            --red: #fda4af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 100px;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(ellipse at 10% 5%, rgba(124,58,237,.2), transparent 40%),
+                radial-gradient(ellipse at 90% 30%, rgba(217,70,239,.13), transparent 40%),
+                var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            line-height: 1.6;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button, input, textarea {
+            font: inherit;
+        }
+
+        button, a {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            width: min(1160px, calc(100% - 36px));
+            margin: auto;
+        }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(11,7,23,.94);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-inner {
+            min-height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .brand {
+            font: 700 27px 'Space Grotesk', sans-serif;
+        }
+
+        .brand span,
+        .gradient-text {
+            background: linear-gradient(110deg, #c4b5fd, #f0abfc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-actions form {
+            margin: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: rgba(255,255,255,.04);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--purple);
+            background: rgba(167,139,250,.13);
+        }
+
+        .btn-primary {
+            color: #160d2c;
+            background: linear-gradient(115deg, #c4b5fd, #f0abfc);
+            border-color: transparent;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(115deg, #ddd6fe, #f5d0fe);
+        }
+
+        .btn-danger {
+            color: var(--red);
+            border-color: rgba(251,113,133,.25);
+        }
+
+        .btn-small {
+            padding: 7px 10px;
+            font-size: 12px;
+        }
+
+        main {
+            padding: 38px 0 70px;
+        }
+
+        .welcome {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .eyebrow {
+            color: var(--pink);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            line-height: 1.25;
+        }
+
+        h1 {
+            font-size: clamp(30px, 4vw, 44px);
+            overflow-wrap: anywhere;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-top: 28px;
+            scroll-margin-top: 95px;
+        }
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 15px;
+        }
+
+        .section-heading h2 {
+            font-size: 21px;
+        }
+
+        .section-heading p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .section-icon {
+            display: grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            background: rgba(167,139,250,.1);
+            font-size: 20px;
+        }
+
+        .card {
+            min-width: 0;
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: linear-gradient(145deg, rgba(29,22,49,.96), rgba(18,13,32,.97));
+            box-shadow: 0 15px 40px rgba(0,0,0,.15);
+        }
+
+        .profile-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .profile-name {
+            font-size: 26px;
+            overflow-wrap: anywhere;
+        }
+
+        .username {
+            color: var(--purple);
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .role {
+            display: inline-block;
+            padding: 5px 11px;
+            margin-top: 12px;
+            border: 1px solid rgba(167,139,250,.3);
+            border-radius: 9px;
+            background: rgba(167,139,250,.1);
+            color: #ddd6fe;
+            font-size: 12px;
+        }
+
+        .profile-bio {
+            margin-top: 18px;
+            color: #c6bdd9;
+            font-size: 14px;
+            white-space: pre-line;
+            overflow-wrap: anywhere;
+        }
+
+        .public-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(7,5,15,.4);
+        }
+
+        .public-link-label {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .public-link a {
+            color: #d8b4fe;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        /* PORTFOLIO READINESS */
+
+        .readiness-card {
+            padding: 25px;
+            border: 1px solid rgba(196,181,253,.25);
+            border-radius: 20px;
+            background: linear-gradient(145deg, rgba(42,28,70,.96), rgba(18,13,32,.97));
+        }
+
+        .readiness-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .readiness-score {
+            color: #d8b4fe;
+            font: 700 44px 'Space Grotesk', sans-serif;
+        }
+
+        .readiness-score small {
+            color: var(--muted);
+            font-size: 17px;
+        }
+
+        .readiness-level {
+            color: var(--pink);
+            font-weight: 700;
+        }
+
+        .readiness-message {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 7px;
+        }
+
+        .readiness-track {
+            height: 10px;
+            overflow: hidden;
+            margin: 22px 0;
+            border-radius: 20px;
+            background: rgba(255,255,255,.09);
+        }
+
+        .readiness-progress {
+            height: 100%;
+            width: {{ readiness.score }}%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #8b5cf6, #d946ef);
+        }
+
+        .readiness-list {
+            display: grid;
+            gap: 11px;
+        }
+
+        .readiness-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            border: 1px solid rgba(196,181,253,.14);
+            border-radius: 12px;
+            background: rgba(255,255,255,.025);
+        }
+
+        .readiness-check-icon {
+            display: grid;
+            place-items: center;
+            width: 27px;
+            height: 27px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            font-weight: 700;
+        }
+
+        .is-done .readiness-check-icon {
+            color: var(--green);
+            background: rgba(34,197,94,.12);
+        }
+
+        .is-pending .readiness-check-icon {
+            color: var(--pink);
+            background: rgba(217,70,239,.12);
+        }
+
+        .readiness-check strong {
+            font-size: 13px;
+        }
+
+        .readiness-check p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        /* QR CODE */
+
+        .qr-layout {
+            display: grid;
+            grid-template-columns: minmax(0,1fr) auto;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .qr-layout h3 {
+            font-size: 21px;
+            margin-bottom: 10px;
+        }
+
+        .qr-layout p {
+            max-width: 540px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .qr-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 18px;
+        }
+
+        .qr-box {
+            display: grid;
+            place-items: center;
+            width: 170px;
+            height: 170px;
+            padding: 11px;
+            border-radius: 18px;
+            background: white;
+        }
+
+        .qr-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* FORMS */
+
+        .grid-two {
+            display: grid;
+            grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr);
+            align-items: start;
+            gap: 20px;
+        }
+
+        .field {
+            margin-top: 15px;
+        }
+
+        .field label {
+            display: block;
+            color: #e5ddf6;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+
+        .field input,
+        .field textarea {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            background: rgba(7,5,15,.5);
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(167,139,250,.1);
+        }
+
+        .field textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: #716783;
+        }
+
+        .form-help {
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        .submit-row {
+            margin-top: 18px;
+        }
+
+        .skill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 20px;
+        }
+
+        .skill-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            max-width: 100%;
+            padding: 7px 9px 7px 12px;
+            border: 1px solid rgba(167,139,250,.25);
+            border-radius: 10px;
+            background: rgba(167,139,250,.09);
+            color: #e7ddff;
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .skill-chip form {
+            display: inline-flex;
+        }
+
+        .mini-delete {
+            display: grid;
+            place-items: center;
+            width: 22px;
+            height: 22px;
+            border: 0;
+            border-radius: 6px;
+            color: var(--red);
+            background: rgba(251,113,133,.1);
+            cursor: pointer;
+        }
+
+        .empty {
+            margin-top: 16px;
+            padding: 17px;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .project-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 15px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* PROJECTS */
+
+        .project-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .project-item {
+            min-width: 0;
+            padding: 21px;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            background: linear-gradient(140deg, rgba(25,18,44,.94), rgba(13,9,25,.96));
+            transition: border-color .2s ease, transform .2s ease;
+        }
+
+        .project-item:hover {
+            transform: translateY(-3px);
+            border-color: rgba(196,181,253,.4);
+        }
+
+        .project-title {
+            font-size: 18px;
+            overflow-wrap: anywhere;
+        }
+
+        .project-description {
+            margin-top: 10px;
+            color: #c1b7d4;
+            font-size: 13px;
+            white-space: pre-line;
+            overflow-wrap: anywhere;
+        }
+
+        .tech-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 13px;
+        }
+
+        .tech-tag {
+            padding: 4px 9px;
+            border: 1px solid rgba(167,139,250,.2);
+            border-radius: 7px;
+            background: rgba(167,139,250,.1);
+            color: #e2d6ff;
+            font-size: 10px;
+            overflow-wrap: anywhere;
+        }
+
+        .project-links,
+        .project-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        details.edit-project {
+            margin-top: 16px;
+            padding-top: 13px;
+            border-top: 1px solid var(--border);
+        }
+
+        details.edit-project summary {
+            cursor: pointer;
+            color: #d8b4fe;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .flash-messages {
+            display: grid;
+            gap: 9px;
+            margin-bottom: 22px;
+        }
+
+        .flash {
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .flash.success {
+            color: #bbf7d0;
+            background: rgba(34,197,94,.09);
+        }
+
+        .flash.error,
+        .flash.danger {
+            color: #fecdd3;
+            background: rgba(244,63,94,.09);
+        }
+
+        .flash.warning {
+            color: #fde68a;
+            background: rgba(245,158,11,.09);
+        }
+
+        .flash.info {
+            color: #bfdbfe;
+            background: rgba(59,130,246,.09);
+        }
+
+        footer {
+            padding: 25px 0 35px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: #827795;
+            font-size: 12px;
+        }
+
+        @media (max-width: 800px) {
+            .grid-two {
+                grid-template-columns: 1fr;
+            }
+
+            .qr-layout {
+                gap: 16px;
+            }
+
+            .qr-box {
+                width: 140px;
+                height: 140px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .container {
+                width: calc(100% - 26px);
+            }
+
+            .nav-inner {
+                padding: 10px 0;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .brand {
+                font-size: 23px;
+            }
+
+            .nav-actions {
+                gap: 6px;
+            }
+
+            .nav-actions .btn {
+                padding: 8px 9px;
+                font-size: 11px;
+            }
+
+            main {
+                padding-top: 26px;
+            }
+
+            .card,
+            .readiness-card {
+                padding: 18px;
+            }
+
+            .section-heading h2 {
+                font-size: 19px;
+            }
+
+            .qr-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .public-link {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .project-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: auto;
+            }
+
+            .readiness-score {
+                font-size: 36px;
+            }
+        }
+
+        /* PORTFOLIO THEMES */
+        .theme-picker { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+        .theme-option { display:flex; align-items:center; gap:8px; padding:9px 13px; border:1px solid var(--border); border-radius:12px; color:var(--text); background:rgba(255,255,255,.04); cursor:pointer; font-size:12px; font-weight:700; }
+        .theme-option:hover, .theme-option.active { border-color:var(--theme-accent, var(--purple)); background:rgba(167,139,250,.12); }
+        .theme-swatch { width:13px; height:13px; border-radius:50%; display:inline-block; background:var(--swatch); }
+        body[data-theme="blue"] { --bg:#071321; --card:#10243b; --border:rgba(125,211,252,.22); --text:#f0f9ff; --muted:#9fb8d0; --purple:#7dd3fc; --pink:#93c5fd; }
+        body[data-theme="green"] { --bg:#071710; --card:#10291e; --border:rgba(134,239,172,.22); --text:#f0fdf4; --muted:#a7c7b2; --purple:#86efac; --pink:#a7f3d0; }
+        body[data-theme="pink"] { --bg:#1a0917; --card:#32152c; --border:rgba(249,168,212,.23); --text:#fff1f7; --muted:#d3aabd; --purple:#f9a8d4; --pink:#f0abfc; }
+        body[data-theme="blue"] .readiness-card, body[data-theme="green"] .readiness-card, body[data-theme="pink"] .readiness-card { background:linear-gradient(145deg, var(--card), var(--bg)); }
+        body[data-theme="blue"] .card, body[data-theme="green"] .card, body[data-theme="pink"] .card { background:linear-gradient(145deg, var(--card), var(--bg)); }
+        .achievement-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:13px; }
+        .achievement { padding:18px; border:1px solid var(--border); border-radius:16px; background:rgba(255,255,255,.035); }
+        .achievement-icon { font-size:27px; margin-bottom:9px; }
+        .achievement h3 { font-size:14px; margin-bottom:5px; }
+        .achievement p { color:var(--muted); font-size:12px; }
+        .achievement.locked { opacity:.48; filter:grayscale(.7); }
+        .achievement-status { display:inline-block; margin-top:10px; font-size:10px; font-weight:700; letter-spacing:.5px; color:var(--green); }
+        @media (max-width:560px) { .theme-option { flex:1 1 42%; justify-content:center; } .achievement-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+    </style>
 </head>
+
 <body>
-<main>
-<h1>Your Dashboard ✦</h1>
-<p>Welcome, {{ user.name }}!</p>
-<div class="card">
-<h2>Your profile</h2>
-<p>Name: {{ user.name }}</p>
-<p>Username: @{{ user.username }}</p>
-<p>Role: {{ user.role }}</p>
-<p>{{ user.bio }}</p>
-<a class="button" href="{{ url_for('edit_profile') }}">Edit Profile</a>
-</div>
-<div class="card">
-<h2>Your public page</h2>
-<p>Share this link with friends, recruiters and teammates.</p>
-<p><a href="{{ url_for('public_profile', username=user.username) }}">
-{{ request.host_url }}u/{{ user.username }}</a></p>
-<a class="button" href="{{ url_for('public_profile', username=user.username) }}">View My Page</a>
-</div>
-<form method="POST" action="{{ url_for('logout') }}">
-<button type="submit">Log Out</button>
-</form>
-<p><a href="{{ url_for('home') }}">← Home</a></p>
-</main>
+    <header class="navbar">
+        <div class="container nav-inner">
+            <a href="{{ url_for('dashboard') }}" class="brand">Link<span>Hub.</span></a>
+
+            <nav class="nav-actions" aria-label="Main navigation">
+                <a class="btn" href="{{ url_for('edit_profile') }}">✎ Edit Profile</a>
+
+                <a class="btn btn-primary"
+                   href="{{ url_for('public_profile', username=user['username']) }}"
+                   target="_blank" rel="noopener noreferrer">
+                    ↗ View Portfolio
+                </a>
+
+                <form method="POST" action="{{ url_for('logout') }}">
+                    <button class="btn btn-danger" type="submit">Logout ↗</button>
+                </form>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages" aria-live="polite">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="welcome">
+            <div>
+                <div class="eyebrow">✦ YOUR CREATOR SPACE</div>
+                <h1>
+                    Welcome back,<br>
+                    <span class="gradient-text">{{ user['name'] }}!</span>
+                </h1>
+                <p class="subtitle">Your skills. Your projects. Your next opportunity.</p>
+            </div>
+
+            <a class="btn btn-primary" href="#add-project">＋ Add a Project</a>
+        </section>
+
+
+        <!-- PORTFOLIO THEMES -->
+        <section class="section" id="themes">
+            <div class="section-heading">
+                <div>
+                    <h2>Make It Yours</h2>
+                    <p>Choose a dashboard colour theme. Your choice stays on this browser.</p>
+                </div>
+                <span class="section-icon">🎨</span>
+            </div>
+            <div class="card">
+                <div class="theme-picker" role="group" aria-label="Choose dashboard theme">
+                    <button type="button" class="theme-option" data-theme-choice="purple" style="--theme-accent:#a78bfa">
+                        <span class="theme-swatch" style="--swatch:#a78bfa"></span> Purple
+                    </button>
+                    <button type="button" class="theme-option" data-theme-choice="blue" style="--theme-accent:#7dd3fc">
+                        <span class="theme-swatch" style="--swatch:#38bdf8"></span> Ocean Blue
+                    </button>
+                    <button type="button" class="theme-option" data-theme-choice="green" style="--theme-accent:#86efac">
+                        <span class="theme-swatch" style="--swatch:#22c55e"></span> Forest Green
+                    </button>
+                    <button type="button" class="theme-option" data-theme-choice="pink" style="--theme-accent:#f9a8d4">
+                        <span class="theme-swatch" style="--swatch:#ec4899"></span> Rose Pink
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ACHIEVEMENT BADGES -->
+        <section class="section" id="achievements">
+            <div class="section-heading">
+                <div>
+                    <h2>Your Achievement Badges</h2>
+                    <p>Earn badges automatically as you build your LinkHub portfolio.</p>
+                </div>
+                <span class="section-icon">🏆</span>
+            </div>
+            {% set has_profile = user['name'] and user['name']|trim and user['role'] and user['role']|trim %}
+            {% set has_first_project = projects|length >= 1 %}
+            {% set has_three_skills = skills|length >= 3 %}
+            {% set has_two_projects = projects|length >= 2 %}
+            {% set is_portfolio_pro = readiness.score >= 80 %}
+            <div class="achievement-grid">
+                <article class="achievement {{ '' if has_profile else 'locked' }}">
+                    <div class="achievement-icon">👤</div>
+                    <h3>Profile Starter</h3>
+                    <p>Add your name and professional role.</p>
+                    <span class="achievement-status">{{ '✓ UNLOCKED' if has_profile else '🔒 LOCKED' }}</span>
+                </article>
+                <article class="achievement {{ '' if has_first_project else 'locked' }}">
+                    <div class="achievement-icon">🚀</div>
+                    <h3>First Project</h3>
+                    <p>Add your first project to showcase your work.</p>
+                    <span class="achievement-status">{{ '✓ UNLOCKED' if has_first_project else '🔒 LOCKED' }}</span>
+                </article>
+                <article class="achievement {{ '' if has_three_skills else 'locked' }}">
+                    <div class="achievement-icon">🧠</div>
+                    <h3>Skill Collector</h3>
+                    <p>Add at least three skills to your profile.</p>
+                    <span class="achievement-status">{{ '✓ UNLOCKED' if has_three_skills else '🔒 LOCKED' }}</span>
+                </article>
+                <article class="achievement {{ '' if has_two_projects else 'locked' }}">
+                    <div class="achievement-icon">💼</div>
+                    <h3>Project Explorer</h3>
+                    <p>Showcase two or more projects.</p>
+                    <span class="achievement-status">{{ '✓ UNLOCKED' if has_two_projects else '🔒 LOCKED' }}</span>
+                </article>
+                <article class="achievement {{ '' if is_portfolio_pro else 'locked' }}">
+                    <div class="achievement-icon">⭐</div>
+                    <h3>Portfolio Pro</h3>
+                    <p>Reach a Portfolio Readiness score of 80 or more.</p>
+                    <span class="achievement-status">{{ '✓ UNLOCKED' if is_portfolio_pro else '🔒 LOCKED' }}</span>
+                </article>
+            </div>
+        </section>
+
+        <!-- PORTFOLIO READINESS -->
+        <section class="section" id="readiness">
+            <div class="section-heading">
+                <div>
+                    <h2>Portfolio Readiness</h2>
+                    <p>See how ready your portfolio is to share with recruiters.</p>
+                </div>
+                <span class="section-icon">✦</span>
+            </div>
+
+            <div class="readiness-card">
+                <div class="readiness-top">
+                    <div>
+                        <div class="readiness-score">
+                            {{ readiness.score }}<small>/100</small>
+                        </div>
+                        <div class="readiness-level">{{ readiness.level }}</div>
+                        <p class="readiness-message">{{ readiness.message }}</p>
+                    </div>
+
+                    <div>
+                        <strong>{{ readiness.completed_count }}/{{ readiness.total_checks }}</strong>
+                        <p class="readiness-message">Checks completed</p>
+                    </div>
+                </div>
+
+                <div class="readiness-track"
+                     role="progressbar"
+                     aria-label="Portfolio readiness score"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     aria-valuenow="{{ readiness.score }}">
+                    <div class="readiness-progress"></div>
+                </div>
+
+                <div class="readiness-list">
+                    {% for check in readiness.checks %}
+                        <div class="readiness-check {{ 'is-done' if check.completed else 'is-pending' }}">
+                            <span class="readiness-check-icon">
+                                {{ '✓' if check.completed else '+' }}
+                            </span>
+
+                            <div>
+                                <strong>{{ check.title }} · {{ check.points }} points</strong>
+                                <p>
+                                    {% if check.completed %}
+                                        Completed — nice work!
+                                    {% else %}
+                                        {{ check.suggestion }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section class="section" id="profile">
+            <div class="section-heading">
+                <div>
+                    <h2>Your Profile</h2>
+                    <p>Your professional identity on LinkHub.</p>
+                </div>
+                <span class="section-icon">✦</span>
+            </div>
+
+            <div class="card">
+                <div class="profile-top">
+                    <div>
+                        <h3 class="profile-name">{{ user['name'] }}</h3>
+                        <p class="username">@{{ user['username'] }}</p>
+
+                        {% if user['role'] %}
+                            <span class="role">{{ user['role'] }}</span>
+                        {% endif %}
+                    </div>
+
+                    <a class="btn" href="{{ url_for('edit_profile') }}">Edit details ↗</a>
+                </div>
+
+                {% if user['bio'] %}
+                    <p class="profile-bio">{{ user['bio'] }}</p>
+                {% else %}
+                    <p class="profile-bio">
+                        Your bio is empty. Add a short introduction to help visitors
+                        understand who you are.
+                    </p>
+                {% endif %}
+
+                <div class="public-link">
+                    <div style="min-width:0">
+                        <p class="public-link-label">YOUR PUBLIC PORTFOLIO LINK</p>
+                        <a href="{{ url_for('public_profile', username=user['username']) }}"
+                           target="_blank" rel="noopener noreferrer">
+                            {{ request.host_url.rstrip('/') }}{{ url_for('public_profile', username=user['username']) }}
+                        </a>
+                    </div>
+
+                    <button class="btn btn-small" type="button" id="copyProfileLink">
+                        Copy link
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- QR CODE -->
+        <section class="section" id="qr-code">
+            <div class="section-heading">
+                <div>
+                    <h2>Your Personal QR Code</h2>
+                    <p>Make your portfolio easy to share in person.</p>
+                </div>
+                <span class="section-icon">▦</span>
+            </div>
+
+            <div class="card qr-layout">
+                <div>
+                    <h3>One scan. Your whole portfolio.</h3>
+                    <p>
+                        Save this QR code to your device or add it to your resume,
+                        business card, event poster, or LinkedIn profile.
+                    </p>
+
+                    <div class="qr-actions">
+                        <a class="btn btn-primary"
+                           href="{{ url_for('profile_qr', username=user['username']) }}"
+                           download="{{ user['username'] }}-linkhub-qr.png">
+                            ↓ Download QR
+                        </a>
+
+                        <a class="btn"
+                           href="{{ url_for('public_profile', username=user['username']) }}"
+                           target="_blank" rel="noopener noreferrer">
+                            Preview portfolio ↗
+                        </a>
+                    </div>
+                </div>
+
+                <div class="qr-box">
+
+                    <img class="qr-image"
+                         src="{{ url_for('profile_qr', username=user['username']) }}"
+                         alt="QR code for {{ user['name'] }}'s LinkHub portfolio"
+                         width="148" height="148">
+                </div>
+            </div>
+        </section>
+
+        <!-- SKILLS -->
+        <section class="section" id="skills">
+            <div class="section-heading">
+                <div>
+                    <h2>My Skills</h2>
+                    <p>Add skills you want visitors and recruiters to notice.</p>
+                </div>
+                <span class="section-icon">🧠</span>
+            </div>
+            <div class="card">
+                <form action="{{ url_for('add_skill') }}" method="POST">
+                    <div class="field">
+                        <label for="skill-name">Skill name</label>
+                        <input id="skill-name" name="name" type="text" maxlength="50"
+                               placeholder="Python, Flask, SQL..." required>
+                    </div>
+                    <div class="submit-row">
+                        <button class="btn btn-primary" type="submit">＋ Add Skill</button>
+                    </div>
+                </form>
+                {% if skills %}
+                    <div class="skill-list">
+                        {% for skill in skills %}
+                            <span class="skill-chip">
+                                {{ skill['name'] }}
+                                <form method="POST" action="{{ url_for('delete_skill', skill_id=skill['id']) }}"
+                                      onsubmit="return confirm('Delete this skill?');">
+                                    <button class="mini-delete" type="submit" aria-label="Delete {{ skill['name'] }}">×</button>
+                                </form>
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty">No skills added yet. Add your first skill above.</div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- ADD PROJECT -->
+        <section class="section" id="add-project">
+            <div class="section-heading">
+                <div>
+                    <h2>Add a Project</h2>
+                    <p>Showcase college projects, personal projects, and applications.</p>
+                </div>
+                <span class="section-icon">🚀</span>
+            </div>
+            <div class="card">
+                <form action="{{ url_for('add_project') }}" method="POST">
+                    <div class="project-form-grid">
+                        <div class="field full-width">
+                            <label for="project-title">Project title *</label>
+                            <input id="project-title" name="title" type="text" maxlength="100"
+                                   placeholder="LinkHub Portfolio" required>
+                        </div>
+                        <div class="field full-width">
+                            <label for="project-description">Description</label>
+                            <textarea id="project-description" name="description" maxlength="1000"
+                                      placeholder="What does your project do?"></textarea>
+                        </div>
+                        <div class="field full-width">
+                            <label for="project-technologies">Technologies used</label>
+                            <input id="project-technologies" name="technologies" type="text" maxlength="300"
+                                   placeholder="Python, Flask, SQLite, HTML, CSS">
+                            <p class="form-help">Separate technologies with commas.</p>
+                        </div>
+                        <div class="field">
+                            <label for="project-github">GitHub project URL</label>
+                            <input id="project-github" name="github_url" type="url"
+                                   placeholder="https://github.com/username/project">
+                        </div>
+                        <div class="field">
+                            <label for="project-demo">Live demo URL</label>
+                            <input id="project-demo" name="demo_url" type="url"
+                                   placeholder="https://your-project.example.com">
+                        </div>
+                    </div>
+                    <div class="submit-row">
+                        <button class="btn btn-primary" type="submit">＋ Save Project</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- EXISTING PROJECTS -->
+        <section class="section" id="projects">
+            <div class="section-heading">
+                <div>
+                    <h2>My Projects</h2>
+                    <p>Your saved projects, source links, and live demos.</p>
+                </div>
+                <span class="section-icon">💻</span>
+            </div>
+            {% if projects %}
+                <div class="project-list">
+                    {% for project in projects %}
+                        <article class="project-item">
+                            <h3 class="project-title">{{ project['title'] }}</h3>
+                            {% if project['description'] %}
+                                <p class="project-description">{{ project['description'] }}</p>
+                            {% else %}
+                                <p class="project-description">No description added yet.</p>
+                            {% endif %}
+
+                            {% if project['technologies'] %}
+                                <div class="tech-list">
+                                    {% for tech in project['technologies'].split(',') %}
+                                        {% if tech.strip() %}
+                                            <span class="tech-tag">{{ tech.strip() }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <div class="project-links">
+                                {% if project['github_url'] %}
+                                    <a class="btn btn-small" href="{{ project['github_url'] }}"
+                                       target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+                                {% endif %}
+                                {% if project['demo_url'] %}
+                                    <a class="btn btn-small" href="{{ project['demo_url'] }}"
+                                       target="_blank" rel="noopener noreferrer">Live Demo ↗</a>
+                                {% endif %}
+                            </div>
+
+                            <div class="project-actions">
+                                <a class="btn btn-small" href="#edit-project-{{ project['id'] }}">✎ Edit project</a>
+                                <form method="POST" action="{{ url_for('delete_project', project_id=project['id']) }}"
+                                      onsubmit="return confirm('Are you sure you want to delete this project? This cannot be undone.');">
+                                    <button class="btn btn-small btn-danger" type="submit">Delete project</button>
+                                </form>
+                            </div>
+
+                            <details class="edit-project" id="edit-project-{{ project['id'] }}">
+                                <summary>Edit project details</summary>
+                                <form method="POST" action="{{ url_for('edit_project', project_id=project['id']) }}">
+                                    <div class="project-form-grid">
+                                        <div class="field full-width">
+                                            <label>Project title *</label>
+                                            <input type="text" name="title" value="{{ project['title'] }}"
+                                                   maxlength="100" required>
+                                        </div>
+                                        <div class="field full-width">
+                                            <label>Description</label>
+                                            <textarea name="description" maxlength="1000">{{ project['description'] or '' }}</textarea>
+                                        </div>
+                                        <div class="field full-width">
+                                            <label>Technologies used</label>
+                                            <input type="text" name="technologies"
+                                                   value="{{ project['technologies'] or '' }}" maxlength="300">
+                                        </div>
+                                        <div class="field">
+                                            <label>GitHub project URL</label>
+                                            <input type="url" name="github_url" value="{{ project['github_url'] or '' }}">
+                                        </div>
+                                        <div class="field">
+                                            <label>Live demo URL</label>
+                                            <input type="url" name="demo_url" value="{{ project['demo_url'] or '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="submit-row">
+                                        <button class="btn btn-primary" type="submit">Save changes</button>
+                                    </div>
+                                </form>
+                            </details>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card empty">You haven't added any projects yet. Use the form above to add your first one.</div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">Built with care using LinkHub · One link. Your entire digital identity.</div>
+    </footer>
+
+    <script>
+        // Copy the user's public portfolio link.
+        const copyButton = document.getElementById('copyProfileLink');
+        if (copyButton) {
+            copyButton.addEventListener('click', async () => {
+                const profileUrl = {{ (request.host_url.rstrip('/') ~ url_for('public_profile', username=user['username']))|tojson }};
+                try {
+                    await navigator.clipboard.writeText(profileUrl);
+                    copyButton.textContent = 'Copied!';
+                } catch (error) {
+                    window.prompt('Copy your portfolio link:', profileUrl);
+                }
+                window.setTimeout(() => { copyButton.textContent = 'Copy link'; }, 1800);
+            });
+        }
+
+        // Dashboard themes are saved in this browser only; no database changes.
+        const themeButtons = document.querySelectorAll('[data-theme-choice]');
+        const allowedThemes = ['purple', 'blue', 'green', 'pink'];
+        function applyTheme(theme) {
+            const safeTheme = allowedThemes.includes(theme) ? theme : 'purple';
+            document.body.dataset.theme = safeTheme;
+            themeButtons.forEach((button) => {
+                const active = button.dataset.themeChoice === safeTheme;
+                button.classList.toggle('active', active);
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+        }
+        let savedTheme = 'purple';
+        try { savedTheme = localStorage.getItem('linkhub-dashboard-theme') || 'purple'; } catch (error) {}
+        applyTheme(savedTheme);
+        themeButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const theme = button.dataset.themeChoice;
+                applyTheme(theme);
+                try { localStorage.setItem('linkhub-dashboard-theme', theme); } catch (error) {}
+            });
+        });
+    </script>
 </body>
 </html>
