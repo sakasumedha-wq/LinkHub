@@ -10,12 +10,21 @@ import re
 from urllib.parse import urlparse
 
 app = Flask(__name__)
-app.secret_key = os.environ.get(
-    "LINKHUB_SECRET_KEY",
-    "dev-only-change-this-before-deployment"
-)
 
-DATABASE = os.path.join(os.path.dirname(__file__), "linkhub.db")
+# Secret key must be configured through an environment variable.
+app.secret_key = os.environ.get("LINKHUB_SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError(
+        "Please set the LINKHUB_SECRET_KEY environment variable."
+    )
+
+# Use a configurable database path.
+# Locally, this defaults to linkhub.db in the project folder.
+DATABASE = os.environ.get(
+    "LINKHUB_DATABASE_PATH",
+    os.path.join(os.path.dirname(__file__), "linkhub.db")
+)
 
 
 def get_db():
@@ -25,6 +34,10 @@ def get_db():
 
 
 def init_db():
+    # Create the database directory if needed.
+    database_dir = os.path.dirname(os.path.abspath(DATABASE))
+    os.makedirs(database_dir, exist_ok=True)
+
     with get_db() as db:
         db.execute("""
             CREATE TABLE IF NOT EXISTS users (
@@ -44,10 +57,14 @@ def init_db():
         # Add missing columns if the database already exists.
         columns = {
             row["name"]
-            for row in db.execute("PRAGMA table_info(users)").fetchall()
+            for row in db.execute(
+                "PRAGMA table_info(users)"
+            ).fetchall()
         }
 
-        for column in ("github_url", "linkedin_url", "instagram_url"):
+        for column in (
+            "github_url", "linkedin_url", "instagram_url"
+        ):
             if column not in columns:
                 db.execute(
                     f"ALTER TABLE users ADD COLUMN {column} "
@@ -101,7 +118,9 @@ def register():
         return redirect(url_for("dashboard"))
 
     if request.method == "POST":
-        username = request.form.get("username", "").strip().lower()
+        username = request.form.get(
+            "username", ""
+        ).strip().lower()
         name = request.form.get("name", "").strip()
         password = request.form.get("password", "")
 
@@ -148,7 +167,9 @@ def login():
         return redirect(url_for("dashboard"))
 
     if request.method == "POST":
-        username = request.form.get("username", "").strip().lower()
+        username = request.form.get(
+            "username", ""
+        ).strip().lower()
         password = request.form.get("password", "")
 
         with get_db() as db:
@@ -158,7 +179,9 @@ def login():
                 WHERE username = ?
             """, (username,)).fetchone()
 
-        if user and check_password_hash(user["password_hash"], password):
+        if user and check_password_hash(
+            user["password_hash"], password
+        ):
             session.clear()
             session["user_id"] = user["id"]
             return redirect(url_for("dashboard"))
@@ -196,9 +219,15 @@ def edit_profile():
         role = request.form.get("role", "").strip()
         bio = request.form.get("bio", "").strip()
 
-        github_url = request.form.get("github_url", "").strip()
-        linkedin_url = request.form.get("linkedin_url", "").strip()
-        instagram_url = request.form.get("instagram_url", "").strip()
+        github_url = request.form.get(
+            "github_url", ""
+        ).strip()
+        linkedin_url = request.form.get(
+            "linkedin_url", ""
+        ).strip()
+        instagram_url = request.form.get(
+            "instagram_url", ""
+        ).strip()
 
         if not name or not role or not bio:
             flash("Please fill in your name, role and bio.")
@@ -291,5 +320,6 @@ def not_found(error):
 
 init_db()
 
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
