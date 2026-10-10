@@ -1,43 +1,54 @@
 
-from flask import (
-    Flask, render_template, request, redirect,
-    url_for, session, flash, abort
-)
-from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3
 import os
 import re
+import sqlite3
+import io
+import qrcode
+
 from urllib.parse import urlparse
+from flask import (
+    Flask, abort, flash, redirect, render_template,
+    request, session, url_for, send_file
+)
+from werkzeug.security import check_password_hash, generate_password_hash
+
+
+# --------------------------------------------------
+# APP CONFIGURATION
+# --------------------------------------------------
 
 app = Flask(__name__)
 
-# Secret key must be configured through an environment variable.
 app.secret_key = os.environ.get("LINKHUB_SECRET_KEY")
 
 if not app.secret_key:
     raise RuntimeError(
-        "Please set the LINKHUB_SECRET_KEY environment variable."
+        "Set the LINKHUB_SECRET_KEY environment variable before starting LinkHub."
     )
 
-# Use a configurable database path.
-# Locally, this defaults to linkhub.db in the project folder.
 DATABASE = os.environ.get(
     "LINKHUB_DATABASE_PATH",
-    os.path.join(os.path.dirname(__file__), "linkhub.db")
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "linkhub.db")
 )
 
 
+# --------------------------------------------------
+# DATABASE
+# Existing database and user data are preserved.
+# --------------------------------------------------
+
 def get_db():
-    db = sqlite3.connect(DATABASE)
-    db.row_factory = sqlite3.Row
-    return db
+    folder = os.path.dirname(os.path.abspath(DATABASE))
+    os.makedirs(folder, exist_ok=True)
+
+    connection = sqlite3.connect(DATABASE)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
+
+    return connection
 
 
 def init_db():
-    # Create the database directory if needed.
-    database_dir = os.path.dirname(os.path.abspath(DATABASE))
-    os.makedirs(database_dir, exist_ok=True)
-
     with get_db() as db:
         db.execute("""
             CREATE TABLE IF NOT EXISTS users (
@@ -45,16 +56,16 @@ def init_db():
                 username TEXT UNIQUE NOT NULL,
                 name TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
-                role TEXT NOT NULL DEFAULT 'Student Developer',
-                bio TEXT NOT NULL DEFAULT 'Welcome to my LinkHub!',
-                github_url TEXT NOT NULL DEFAULT '',
-                linkedin_url TEXT NOT NULL DEFAULT '',
-                instagram_url TEXT NOT NULL DEFAULT '',
+                role TEXT DEFAULT '',
+                bio TEXT DEFAULT '',
+                github_url TEXT DEFAULT '',
+                linkedin_url TEXT DEFAULT '',
+                instagram_url TEXT DEFAULT '',
+                resume_url TEXT DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # Add missing columns if the database already exists.
         columns = {
             row["name"]
             for row in db.execute(
@@ -62,15 +73,51 @@ def init_db():
             ).fetchall()
         }
 
-        for column in (
-            "github_url", "linkedin_url", "instagram_url"
-        ):
+        migrations = {
+            "role": "TEXT DEFAULT ''",
+            "bio": "TEXT DEFAULT ''",
+            "github_url": "TEXT DEFAULT ''",
+            "linkedin_url": "TEXT DEFAULT ''",
+            "instagram_url": "TEXT DEFAULT ''",
+            "resume_url": "TEXT DEFAULT ''",
+        }
+
+        for column, definition in migrations.items():
             if column not in columns:
                 db.execute(
-                    f"ALTER TABLE users ADD COLUMN {column} "
-                    "TEXT NOT NULL DEFAULT ''"
+                    f"ALTER TABLE users ADD COLUMN {column} {definition}"
                 )
 
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS projects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT DEFAULT '',
+                technologies TEXT DEFAULT '',
+                github_url TEXT DEFAULT '',
+                demo_url TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id)
+                    REFERENCES users(id) ON DELETE CASCADE
+            )
+        """)
+
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS skills (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                UNIQUE (user_id, name),
+                FOREIGN KEY (user_id)
+                    REFERENCES users(id) ON DELETE CASCADE
+            )
+        """)
+
+
+# --------------------------------------------------
+# HELPERS
+# --------------------------------------------------
 
 def current_user():
     user_id = session.get("user_id")
@@ -79,123 +126,291 @@ def current_user():
         return None
 
     with get_db() as db:
-        return db.execute("""
-            SELECT id, username, name, role, bio,
-                   github_url, linkedin_url, instagram_url
-            FROM users
-            WHERE id = ?
-        """, (user_id,)).fetchone()
+        user = db.execute(
+            "SELECT * FROM users WHERE id = ?",
+            (user_id,)
+        ).fetchone()
+
+    if user is None:
+        session.clear()
+
+    return user
 
 
-def valid_profile_url(value, allowed_hosts):
-    """Accept an empty field or a valid HTTPS profile URL."""
+def valid_url(value, allowed_hosts=None):
+    """Accept empty optional URLs or valid HTTPS URLs."""
     if not value:
         return True
+
+    if len(value) > 500:
+        return False
 
     try:
         parsed = urlparse(value)
         hostname = (parsed.hostname or "").lower()
 
-        return (
-            parsed.scheme == "https"
-            and hostname in allowed_hosts
-            and parsed.username is None
-            and parsed.password is None
-            and parsed.port in (None, 443)
-        )
+        if parsed.scheme != "https" or not hostname or not parsed.netloc:
+            return False
+
+        if parsed.username or parsed.password:
+            return False
+
+        if parsed.port not in (None, 443):
+            return False
+
+        if allowed_hosts and not any(
+            hostname == host or hostname.endswith("." + host)
+            for host in allowed_hosts
+        ):
+            return False
+
+        return True
+
     except ValueError:
         return False
 
 
+GITHUB_HOSTS = {"github.com"}
+LINKEDIN_HOSTS = {"linkedin.com"}
+INSTAGRAM_HOSTS = {"instagram.com"}
+
+
+# --------------------------------------------------
+# PORTFOLIO READINESS SCORE
+# Calculated from existing data; never stored in DB.
+# Total possible score: 100 points.
+# --------------------------------------------------
+
+def calculate_portfolio_readiness(user, projects, skills):
+    score = 0
+    checks = []
+
+    def add_check(title, points, completed, suggestion):
+        nonlocal score
+
+        completed = bool(completed)
+
+        if completed:
+            score += points
+
+        checks.append({
+            "title": title,
+            "points": points,
+            "completed": completed,
+            "suggestion": suggestion
+        })
+
+    # 1. Basic profile: 20 points
+    add_check(
+        "Full name",
+        10,
+        bool((user["name"] or "").strip()),
+        "Add your name to identify your portfolio."
+    )
+
+    add_check(
+        "Professional role",
+        10,
+        bool((user["role"] or "").strip()),
+        "Add a role such as AI/ML Student or Web Developer."
+    )
+
+    # 2. Bio: 15 points
+    add_check(
+        "About you",
+        15,
+        len((user["bio"] or "").strip()) >= 50,
+        "Write an informative bio of at least 50 characters."
+    )
+
+    # 3. Skills: 15 points
+    add_check(
+        "Skills",
+        15,
+        len(skills) >= 3,
+        "Add at least 3 skills you can demonstrate."
+    )
+
+    # 4. Projects: 20 points
+    add_check(
+        "Projects",
+        20,
+        len(projects) >= 2,
+        "Add at least 2 projects to showcase your work."
+    )
+
+    # 5. Project descriptions: 10 points
+    projects_with_descriptions = sum(
+        1 for project in projects
+        if len((project["description"] or "").strip()) >= 30
+    )
+
+    add_check(
+        "Project descriptions",
+        10,
+        len(projects) > 0
+        and projects_with_descriptions == len(projects),
+        "Write a meaningful description for every project."
+    )
+
+    # 6. Technologies: 10 points
+    projects_with_technologies = sum(
+        1 for project in projects
+        if (project["technologies"] or "").strip()
+    )
+
+    add_check(
+        "Technologies used",
+        10,
+        len(projects) > 0
+        and projects_with_technologies == len(projects),
+        "List the technologies used in each project."
+    )
+
+    # 7. GitHub or LinkedIn: 5 points
+    has_professional_link = any(
+        (user[field] or "").strip()
+        for field in ("github_url", "linkedin_url")
+    )
+
+    add_check(
+        "Professional links",
+        5,
+        has_professional_link,
+        "Add your GitHub or LinkedIn profile."
+    )
+
+    # 8. Resume: 5 points
+    add_check(
+        "Resume link",
+        5,
+        bool((user["resume_url"] or "").strip()),
+        "Add a publicly accessible link to your resume."
+    )
+
+    if score >= 80:
+        level = "Strong portfolio"
+        message = "Great progress! Review any remaining suggestions."
+    elif score >= 60:
+        level = "Good start"
+        message = "Your portfolio is developing. A few improvements can help."
+    elif score >= 40:
+        level = "Getting started"
+        message = "Complete more sections to strengthen your portfolio."
+    else:
+        level = "Needs improvement"
+        message = "Start with your profile details, skills, and projects."
+
+    return {
+        "score": score,
+        "level": level,
+        "message": message,
+        "checks": checks,
+        "completed_count": sum(
+            1 for check in checks if check["completed"]
+        ),
+        "total_checks": len(checks)
+    }
+
+
+# --------------------------------------------------
+# HOME
+# --------------------------------------------------
+
 @app.route("/")
 def home():
-    return render_template("home.html", user=current_user())
+    return render_template("home.html")
 
+
+# --------------------------------------------------
+# REGISTER
+# --------------------------------------------------
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    if current_user():
-        return redirect(url_for("dashboard"))
-
     if request.method == "POST":
-        username = request.form.get(
-            "username", ""
-        ).strip().lower()
+        username = request.form.get("username", "").strip().lower()
         name = request.form.get("name", "").strip()
         password = request.form.get("password", "")
 
         if not re.fullmatch(r"[a-z0-9_]{3,30}", username):
             flash(
-                "Username must be 3-30 characters: "
-                "letters, numbers or underscores."
+                "Username must be 3–30 characters using letters, "
+                "numbers, or underscores.",
+                "error"
             )
             return render_template("register.html")
 
-        if not name or len(name) > 80:
-            flash("Enter a name with at most 80 characters.")
+        if not name or len(name) > 100:
+            flash("Enter a valid name.", "error")
             return render_template("register.html")
 
         if len(password) < 8:
-            flash("Password must contain at least 8 characters.")
+            flash("Password must contain at least 8 characters.", "error")
             return render_template("register.html")
+
+        password_hash = generate_password_hash(password)
 
         try:
             with get_db() as db:
-                cursor = db.execute("""
+                db.execute(
+                    """
                     INSERT INTO users (username, name, password_hash)
                     VALUES (?, ?, ?)
-                """, (
-                    username,
-                    name,
-                    generate_password_hash(password)
-                ))
-                user_id = cursor.lastrowid
+                    """,
+                    (username, name, password_hash)
+                )
 
-            session.clear()
-            session["user_id"] = user_id
-            return redirect(url_for("dashboard"))
+            flash("Account created successfully. Please log in.", "success")
+            return redirect(url_for("login"))
 
         except sqlite3.IntegrityError:
-            flash("That username is already taken. Choose another.")
+            flash("That username is already taken.", "error")
 
     return render_template("register.html")
 
 
+# --------------------------------------------------
+# LOGIN
+# --------------------------------------------------
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if current_user():
-        return redirect(url_for("dashboard"))
-
     if request.method == "POST":
-        username = request.form.get(
-            "username", ""
-        ).strip().lower()
+        username = request.form.get("username", "").strip().lower()
         password = request.form.get("password", "")
 
         with get_db() as db:
-            user = db.execute("""
-                SELECT id, password_hash
-                FROM users
-                WHERE username = ?
-            """, (username,)).fetchone()
+            user = db.execute(
+                "SELECT * FROM users WHERE username = ?",
+                (username,)
+            ).fetchone()
 
-        if user and check_password_hash(
-            user["password_hash"], password
-        ):
+        if user and check_password_hash(user["password_hash"], password):
             session.clear()
             session["user_id"] = user["id"]
+            flash("Welcome back!", "success")
             return redirect(url_for("dashboard"))
 
-        flash("Invalid username or password.")
+        flash("Invalid username or password.", "error")
 
     return render_template("login.html")
 
 
+# --------------------------------------------------
+# LOGOUT
+# --------------------------------------------------
+
 @app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
+    flash("You have been logged out.", "success")
     return redirect(url_for("home"))
 
+
+# --------------------------------------------------
+# DASHBOARD
+# --------------------------------------------------
 
 @app.route("/dashboard")
 def dashboard():
@@ -204,10 +419,43 @@ def dashboard():
     if not user:
         return redirect(url_for("login"))
 
-    return render_template("dashboard.html", user=user)
+    with get_db() as db:
+        projects = db.execute(
+            """
+            SELECT * FROM projects
+            WHERE user_id = ?
+            ORDER BY id DESC
+            """,
+            (user["id"],)
+        ).fetchall()
+
+        skills = db.execute(
+            """
+            SELECT * FROM skills
+            WHERE user_id = ?
+            ORDER BY name COLLATE NOCASE
+            """,
+            (user["id"],)
+        ).fetchall()
+
+    readiness = calculate_portfolio_readiness(
+        user, projects, skills
+    )
+
+    return render_template(
+        "dashboard.html",
+        user=user,
+        projects=projects,
+        skills=skills,
+        readiness=readiness
+    )
 
 
-@app.route("/edit", methods=["GET", "POST"])
+# --------------------------------------------------
+# EDIT PROFILE
+# --------------------------------------------------
+
+@app.route("/edit-profile", methods=["GET", "POST"])
 def edit_profile():
     user = current_user()
 
@@ -218,105 +466,336 @@ def edit_profile():
         name = request.form.get("name", "").strip()
         role = request.form.get("role", "").strip()
         bio = request.form.get("bio", "").strip()
+        github_url = request.form.get("github_url", "").strip()
+        linkedin_url = request.form.get("linkedin_url", "").strip()
+        instagram_url = request.form.get("instagram_url", "").strip()
+        resume_url = request.form.get("resume_url", "").strip()
 
-        github_url = request.form.get(
-            "github_url", ""
-        ).strip()
-        linkedin_url = request.form.get(
-            "linkedin_url", ""
-        ).strip()
-        instagram_url = request.form.get(
-            "instagram_url", ""
-        ).strip()
+        if not name or len(name) > 100:
+            flash("Name is required and must be under 100 characters.", "error")
 
-        if not name or not role or not bio:
-            flash("Please fill in your name, role and bio.")
-            return render_template("edit.html", user=user)
+        elif len(role) > 150 or len(bio) > 1000:
+            flash("Your role or bio is too long.", "error")
 
-        if len(name) > 80 or len(role) > 100 or len(bio) > 500:
-            flash("Name, role or bio exceeds its allowed length.")
-            return render_template("edit.html", user=user)
+        elif not valid_url(github_url, GITHUB_HOSTS):
+            flash("Enter a valid HTTPS GitHub URL.", "error")
 
-        if any(len(link) > 300 for link in (
-            github_url, linkedin_url, instagram_url
-        )):
-            flash("A social link is too long.")
-            return render_template("edit.html", user=user)
+        elif not valid_url(linkedin_url, LINKEDIN_HOSTS):
+            flash("Enter a valid HTTPS LinkedIn URL.", "error")
 
-        if not valid_profile_url(
-            github_url, {"github.com", "www.github.com"}
-        ):
-            flash("Enter a valid HTTPS GitHub profile URL.")
-            return render_template("edit.html", user=user)
+        elif not valid_url(instagram_url, INSTAGRAM_HOSTS):
+            flash("Enter a valid HTTPS Instagram URL.", "error")
 
-        if not valid_profile_url(
-            linkedin_url, {"linkedin.com", "www.linkedin.com"}
-        ):
-            flash("Enter a valid HTTPS LinkedIn profile URL.")
-            return render_template("edit.html", user=user)
+        elif not valid_url(resume_url):
+            flash("Resume must be a valid HTTPS link.", "error")
 
-        if not valid_profile_url(
-            instagram_url, {"instagram.com", "www.instagram.com"}
-        ):
-            flash("Enter a valid HTTPS Instagram profile URL.")
-            return render_template("edit.html", user=user)
+        else:
+            with get_db() as db:
+                db.execute(
+                    """
+                    UPDATE users
+                    SET name = ?, role = ?, bio = ?, github_url = ?,
+                        linkedin_url = ?, instagram_url = ?, resume_url = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        name, role, bio, github_url, linkedin_url,
+                        instagram_url, resume_url, user["id"]
+                    )
+                )
 
-        with get_db() as db:
-            db.execute("""
-                UPDATE users
-                SET name = ?,
-                    role = ?,
-                    bio = ?,
-                    github_url = ?,
-                    linkedin_url = ?,
-                    instagram_url = ?
-                WHERE id = ?
-            """, (
-                name,
-                role,
-                bio,
-                github_url,
-                linkedin_url,
-                instagram_url,
-                user["id"]
-            ))
-
-        flash("Your profile has been updated!")
-        return redirect(url_for("dashboard"))
+            flash("Profile updated successfully!", "success")
+            return redirect(url_for("dashboard"))
 
     return render_template("edit.html", user=user)
 
 
+# --------------------------------------------------
+# ADD PROJECT
+# --------------------------------------------------
+
+@app.route("/projects/add", methods=["POST"])
+def add_project():
+    user = current_user()
+
+    if not user:
+        return redirect(url_for("login"))
+
+    title = request.form.get("title", "").strip()
+    description = request.form.get("description", "").strip()
+    technologies = request.form.get("technologies", "").strip()
+    github_url = request.form.get("github_url", "").strip()
+    demo_url = request.form.get("demo_url", "").strip()
+
+    if not title or len(title) > 100:
+        flash("Project title is required and must be under 100 characters.", "error")
+
+    elif len(description) > 1000 or len(technologies) > 300:
+        flash("Project description or technologies are too long.", "error")
+
+    elif not valid_url(github_url, GITHUB_HOSTS):
+        flash("Enter a valid HTTPS GitHub project URL.", "error")
+
+    elif not valid_url(demo_url):
+        flash("Demo URL must be a valid HTTPS link.", "error")
+
+    else:
+        with get_db() as db:
+            db.execute(
+                """
+                INSERT INTO projects (
+                    user_id, title, description, technologies,
+                    github_url, demo_url
+                )
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user["id"], title, description, technologies,
+                    github_url, demo_url
+                )
+            )
+
+        flash("Project added successfully!", "success")
+
+    return redirect(url_for("dashboard"))
+
+
+# --------------------------------------------------
+# EDIT PROJECT
+# --------------------------------------------------
+
+@app.route("/projects/<int:project_id>/edit", methods=["POST"])
+def edit_project(project_id):
+    user = current_user()
+
+    if not user:
+        return redirect(url_for("login"))
+
+    title = request.form.get("title", "").strip()
+    description = request.form.get("description", "").strip()
+    technologies = request.form.get("technologies", "").strip()
+    github_url = request.form.get("github_url", "").strip()
+    demo_url = request.form.get("demo_url", "").strip()
+
+    if not title or len(title) > 100:
+        flash("Project title is required and must be under 100 characters.", "error")
+
+    elif len(description) > 1000 or len(technologies) > 300:
+        flash("Project description or technologies are too long.", "error")
+
+    elif not valid_url(github_url, GITHUB_HOSTS):
+        flash("Enter a valid HTTPS GitHub project URL.", "error")
+
+    elif not valid_url(demo_url):
+        flash("Demo URL must be a valid HTTPS link.", "error")
+
+    else:
+        with get_db() as db:
+            result = db.execute(
+                """
+                UPDATE projects
+                SET title = ?, description = ?, technologies = ?,
+                    github_url = ?, demo_url = ?
+                WHERE id = ? AND user_id = ?
+                """,
+                (
+                    title, description, technologies, github_url,
+                    demo_url, project_id, user["id"]
+                )
+            )
+
+        if result.rowcount:
+            flash("Project updated successfully!", "success")
+        else:
+            flash("Project not found.", "error")
+
+    return redirect(url_for("dashboard"))
+
+
+# --------------------------------------------------
+# DELETE PROJECT
+# --------------------------------------------------
+
+@app.route("/projects/<int:project_id>/delete", methods=["POST"])
+def delete_project(project_id):
+    user = current_user()
+
+    if not user:
+        return redirect(url_for("login"))
+
+    with get_db() as db:
+        result = db.execute(
+            "DELETE FROM projects WHERE id = ? AND user_id = ?",
+            (project_id, user["id"])
+        )
+
+    if result.rowcount:
+        flash("Project deleted successfully.", "success")
+    else:
+        flash("Project not found.", "error")
+
+    return redirect(url_for("dashboard"))
+
+
+# --------------------------------------------------
+# ADD SKILL
+# --------------------------------------------------
+
+@app.route("/skills/add", methods=["POST"])
+def add_skill():
+    user = current_user()
+
+    if not user:
+        return redirect(url_for("login"))
+
+    skill_name = request.form.get("name", "").strip()
+
+    if not skill_name or len(skill_name) > 50:
+        flash("Skill name is required and must be under 50 characters.", "error")
+        return redirect(url_for("dashboard"))
+
+    try:
+        with get_db() as db:
+            db.execute(
+                "INSERT INTO skills (user_id, name) VALUES (?, ?)",
+                (user["id"], skill_name)
+            )
+
+        flash("Skill added successfully!", "success")
+
+    except sqlite3.IntegrityError:
+        flash("You have already added that skill.", "error")
+
+    return redirect(url_for("dashboard"))
+
+
+# --------------------------------------------------
+# DELETE SKILL
+# --------------------------------------------------
+
+@app.route("/skills/<int:skill_id>/delete", methods=["POST"])
+def delete_skill(skill_id):
+    user = current_user()
+
+    if not user:
+        return redirect(url_for("login"))
+
+    with get_db() as db:
+        result = db.execute(
+            "DELETE FROM skills WHERE id = ? AND user_id = ?",
+            (skill_id, user["id"])
+        )
+
+    if result.rowcount:
+        flash("Skill deleted successfully.", "success")
+    else:
+        flash("Skill not found.", "error")
+
+    return redirect(url_for("dashboard"))
+
+
+# --------------------------------------------------
+# PUBLIC PORTFOLIO
+# --------------------------------------------------
+
 @app.route("/u/<username>")
 def public_profile(username):
     with get_db() as db:
-        profile = db.execute("""
-            SELECT username, name, role, bio,
-                   github_url, linkedin_url, instagram_url
-            FROM users
-            WHERE username = ?
-        """, (username.lower(),)).fetchone()
+        user = db.execute(
+            "SELECT * FROM users WHERE username = ?",
+            (username.lower(),)
+        ).fetchone()
 
-    if not profile:
-        abort(404)
+        if user is None:
+            abort(404)
 
-    logged_in_user = current_user()
-    is_owner = (
-        logged_in_user is not None
-        and logged_in_user["username"] == profile["username"]
-    )
+        projects = db.execute(
+            """
+            SELECT * FROM projects
+            WHERE user_id = ?
+            ORDER BY id DESC
+            """,
+            (user["id"],)
+        ).fetchall()
+
+        skills = db.execute(
+            """
+            SELECT * FROM skills
+            WHERE user_id = ?
+            ORDER BY name COLLATE NOCASE
+            """,
+            (user["id"],)
+        ).fetchall()
 
     return render_template(
         "index.html",
-        profile=profile,
-        is_owner=is_owner
+        user=user,
+        projects=projects,
+        skills=skills
     )
 
 
+# --------------------------------------------------
+# PERSONAL QR CODE
+# --------------------------------------------------
+
+@app.route("/u/<username>/qr.png")
+def profile_qr(username):
+    """Generate a downloadable QR code for a user's public portfolio."""
+
+    with get_db() as db:
+        user = db.execute(
+            "SELECT username FROM users WHERE username = ?",
+            (username.lower(),)
+        ).fetchone()
+
+    if user is None:
+        abort(404)
+
+    portfolio_url = url_for(
+        "public_profile",
+        username=user["username"],
+        _external=True
+    )
+
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4
+    )
+
+    qr.add_data(portfolio_url)
+    qr.make(fit=True)
+
+    image = qr.make_image(
+        fill_color="#17132b",
+        back_color="white"
+    )
+
+    image_buffer = io.BytesIO()
+    image.save(image_buffer, format="PNG")
+    image_buffer.seek(0)
+
+    return send_file(
+        image_buffer,
+        mimetype="image/png",
+        download_name=f"{user['username']}-linkhub-qr.png"
+    )
+
+
+# --------------------------------------------------
+# NOT FOUND
+# --------------------------------------------------
+
 @app.errorhandler(404)
-def not_found(error):
+def page_not_found(error):
     return render_template("not_found.html"), 404
 
+
+# --------------------------------------------------
+# INITIALIZE EXISTING DATABASE TABLES
+# --------------------------------------------------
 
 init_db()
 

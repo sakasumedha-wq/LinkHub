@@ -3,266 +3,919 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10091f">
     <title>Edit Profile | LinkHub</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --bg: #10091f;
+            --panel: rgba(30, 20, 52, 0.78);
+            --panel-light: rgba(255, 255, 255, 0.045);
+            --border: rgba(199, 165, 255, 0.16);
+            --purple: #a78bfa;
+            --pink: #f0abfc;
+            --text: #f7f2ff;
+            --muted: #b3a8c9;
+            --green: #86efac;
+            --red: #fda4af;
+        }
+
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: #0b0b12;
-            color: #f5f5fa;
-            padding: 25px 16px;
-            margin: 0;
             min-height: 100vh;
+            overflow-x: hidden;
+            background:
+                radial-gradient(ellipse at 10% 5%, #38205b 0%, transparent 38%),
+                radial-gradient(ellipse at 95% 90%, #28163f 0%, transparent 38%),
+                var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
         }
 
-        main {
-            max-width: 600px;
-            width: 100%;
-            margin: 35px auto;
-            background: #14141f;
-            padding: 32px;
-            border: 1px solid #343344;
-            border-radius: 18px;
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.16;
+            background-image: radial-gradient(
+                rgba(255,255,255,0.65) 0.7px,
+                transparent 0.7px
+            );
+            background-size: 27px 27px;
+        }
+
+        .orb {
+            position: fixed;
+            z-index: 0;
+            width: 270px;
+            height: 270px;
+            border-radius: 50%;
+            filter: blur(85px);
+            opacity: 0.23;
+            pointer-events: none;
+            animation: orbFloat 12s ease-in-out infinite alternate;
+        }
+
+        .orb-one {
+            background: #9333ea;
+            top: 10%;
+            left: -130px;
+        }
+
+        .orb-two {
+            background: #db2777;
+            bottom: 0;
+            right: -130px;
+            animation-delay: -5s;
+        }
+
+        .orb-three {
+            background: #6366f1;
+            top: 50%;
+            left: 60%;
+            width: 180px;
+            height: 180px;
+            animation-delay: -8s;
+        }
+
+        @keyframes orbFloat {
+            from { transform: translate3d(0, 0, 0) scale(1); }
+            to { transform: translate3d(45px, -35px, 0) scale(1.18); }
+        }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 18px rgba(167,139,250,0.15); }
+            50% { box-shadow: 0 0 30px rgba(167,139,250,0.32); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .navbar {
+            position: relative;
+            z-index: 2;
+            min-height: 76px;
+            padding: 16px 7%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(16, 9, 31, 0.55);
+            backdrop-filter: blur(18px);
+            animation: fadeDown 0.65s ease both;
         }
 
         .brand {
-            font-size: 22px;
-            font-weight: bold;
-            color: #b9a0ff;
-            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            color: var(--text);
+            text-decoration: none;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 23px;
+            font-weight: 700;
+            letter-spacing: -1px;
         }
 
-        .brand span {
+        .brand-icon {
+            display: grid;
+            place-items: center;
+            width: 37px;
+            height: 37px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #a78bfa, #e879f9);
+            color: #1b1030;
+            box-shadow: 0 0 22px rgba(167,139,250,0.3);
+        }
+
+        .brand span:last-child {
+            background: linear-gradient(90deg, #ffffff, #d8b4fe, #f0abfc);
+            background-size: 200% auto;
+            color: transparent;
+            background-clip: text;
+            -webkit-background-clip: text;
+            animation: gradientMove 5s ease infinite;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-link {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 10px 15px;
+            border: 1px solid transparent;
+            border-radius: 11px;
+            transition: 0.25s ease;
+        }
+
+        .nav-link:hover {
             color: white;
+            background: var(--panel-light);
+            border-color: var(--border);
+        }
+
+        .nav-link.active {
+            color: #e9d5ff;
+            background: rgba(167,139,250,0.11);
+            border-color: rgba(167,139,250,0.22);
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            width: min(100% - 36px, 850px);
+            margin: 50px auto 70px;
+        }
+
+        .page-heading {
+            margin-bottom: 27px;
+            animation: fadeUp 0.7s ease both;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            margin-bottom: 17px;
+            border: 1px solid rgba(196,181,253,0.22);
+            border-radius: 100px;
+            color: #e9d5ff;
+            background: rgba(167,139,250,0.09);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.7px;
+            text-transform: uppercase;
+        }
+
+        .eyebrow-dot {
+            width: 7px;
+            height: 7px;
+            background: #c4b5fd;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #a78bfa;
+            animation: glowPulse 2s infinite;
         }
 
         h1 {
-            font-size: 30px;
-            margin-bottom: 10px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(32px, 5vw, 49px);
+            line-height: 1.15;
+            letter-spacing: -1.8px;
+            font-weight: 700;
         }
 
-        h2 {
-            margin-top: 30px;
-            margin-bottom: 8px;
-            font-size: 19px;
-            color: #c5b4ff;
-        }
-
-        p {
-            color: #aaa8bb;
-            line-height: 1.7;
+        .gradient-text {
+            background: linear-gradient(100deg, #c4b5fd, #f0abfc, #a78bfa);
+            background-size: 200% auto;
+            color: transparent;
+            background-clip: text;
+            -webkit-background-clip: text;
+            animation: gradientMove 6s ease infinite;
         }
 
         .subtitle {
-            margin-top: 0;
+            max-width: 550px;
+            margin-top: 12px;
+            color: var(--muted);
             font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .form-card {
+            position: relative;
+            overflow: hidden;
+            padding: clamp(20px, 5vw, 38px);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            background: var(--panel);
+            backdrop-filter: blur(24px);
+            box-shadow:
+                0 25px 70px rgba(0,0,0,0.25),
+                inset 0 1px 0 rgba(255,255,255,0.055);
+            animation: fadeUp 0.85s 0.12s ease both;
+        }
+
+        .form-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                #c4b5fd,
+                #f0abfc,
+                transparent
+            );
+            opacity: 0.8;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .section-icon {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            border: 1px solid rgba(196,181,253,0.2);
+            border-radius: 12px;
+            background: rgba(167,139,250,0.12);
+            font-size: 17px;
+        }
+
+        .section-subtitle {
+            margin-top: 4px;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 400;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px 20px;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
         }
 
         label {
-            display: block;
-            margin: 20px 0 9px;
-            font-size: 14px;
-            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 9px;
+            color: #eee7ff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
         }
 
-        input,
-        textarea {
+        .optional {
+            color: #9e91b7;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: #bda8ed;
+            font-size: 15px;
+            pointer-events: none;
+        }
+
+        input, textarea {
             display: block;
             width: 100%;
-            padding: 13px 14px;
-            background: #0b0b12;
-            color: white;
-            border: 1px solid #454158;
-            border-radius: 9px;
-            font: inherit;
-            font-size: 14px;
+            border: 1px solid rgba(196,181,253,0.15);
+            border-radius: 13px;
+            outline: none;
+            background: rgba(12,7,25,0.54);
+            color: var(--text);
+            font: 13px 'DM Sans', sans-serif;
+            transition:
+                border-color 0.25s ease,
+                background 0.25s ease,
+                box-shadow 0.25s ease,
+                transform 0.25s ease;
         }
 
-        input:focus,
-        textarea:focus {
-            outline: 2px solid #9275ef;
-            border-color: #b9a0ff;
-        }
-
-        input::placeholder,
-        textarea::placeholder {
-            color: #777488;
+        input {
+            min-height: 48px;
+            padding: 12px 14px 12px 43px;
         }
 
         textarea {
-            min-height: 120px;
+            min-height: 125px;
+            padding: 15px;
+            line-height: 1.8;
             resize: vertical;
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #766989;
+        }
+
+        input:hover, textarea:hover {
+            border-color: rgba(196,181,253,0.34);
+        }
+
+        input:focus, textarea:focus {
+            border-color: #a78bfa;
+            background: rgba(24,15,43,0.9);
+            box-shadow: 0 0 0 4px rgba(167,139,250,0.11);
+        }
+
+        .field-hint {
+            margin-top: 8px;
+            color: #9285a8;
+            font-size: 11px;
             line-height: 1.6;
         }
 
-        .hint {
-            font-size: 12px;
-            margin-top: 6px;
+        .char-count {
+            margin-top: 7px;
+            color: #9285a8;
+            font-size: 10px;
+            text-align: right;
         }
 
         .divider {
-            border: 0;
-            border-top: 1px solid #343344;
-            margin: 30px 0;
+            height: 1px;
+            margin: 32px 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                var(--border),
+                transparent
+            );
         }
 
-        .save-button {
-            width: 100%;
-            margin-top: 28px;
-            padding: 15px;
-            background: linear-gradient(90deg, #b9a0ff, #a9b7ff);
-            color: #100d1c;
-            border: 0;
-            border-radius: 9px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s, opacity 0.2s;
+        .flash-container {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 22px;
+            animation: fadeDown 0.45s ease both;
         }
 
-        .save-button:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
+        .flash {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 13px 15px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+            border: 1px solid;
+            overflow-wrap: anywhere;
         }
 
-        .back-links {
+        .flash.success {
+            color: var(--green);
+            border-color: rgba(134,239,172,0.23);
+            background: rgba(34,197,94,0.08);
+        }
+
+        .flash.error, .flash.danger {
+            color: var(--red);
+            border-color: rgba(253,164,175,0.23);
+            background: rgba(244,63,94,0.08);
+        }
+
+        .flash.warning {
+            color: #fcd34d;
+            border-color: rgba(252,211,77,0.23);
+            background: rgba(234,179,8,0.08);
+        }
+
+        .flash.info, .flash.message {
+            color: #c4b5fd;
+            border-color: rgba(196,181,253,0.23);
+            background: rgba(167,139,250,0.08);
+        }
+
+        .actions {
             display: flex;
             flex-wrap: wrap;
-            gap: 18px;
-            margin-top: 25px;
+            align-items: center;
+            gap: 13px;
+            margin-top: 32px;
         }
 
-        a {
-            color: #b9a0ff;
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 47px;
+            padding: 12px 21px;
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
             text-decoration: none;
-            font-size: 13px;
+            cursor: pointer;
+            transition:
+                transform 0.22s ease,
+                box-shadow 0.22s ease,
+                background 0.22s ease,
+                border-color 0.22s ease;
         }
 
-        a:hover {
-            text-decoration: underline;
+        .btn-primary {
+            flex: 1;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: linear-gradient(110deg, #8b5cf6, #c084fc, #e879f9);
+            background-size: 200% auto;
+            color: #190d2d;
+            box-shadow: 0 8px 25px rgba(139,92,246,0.2);
+            animation: gradientMove 5s ease infinite;
         }
 
-        .error {
-            color: #ffb0b0;
-            background: #29171f;
-            padding: 12px;
-            border: 1px solid #59303a;
-            border-radius: 8px;
-            font-size: 13px;
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(168,85,247,0.35);
         }
 
-        @media (max-width: 480px) {
-            body {
-                padding: 12px;
+        .btn-primary:active, .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.035);
+            color: #e6dcf7;
+        }
+
+        .btn-secondary:hover {
+            border-color: rgba(196,181,253,0.42);
+            background: rgba(167,139,250,0.09);
+            transform: translateY(-2px);
+        }
+
+        .btn:focus-visible, .nav-link:focus-visible {
+            outline: 2px solid #c4b5fd;
+            outline-offset: 4px;
+        }
+
+        .footer-note {
+            margin-top: 22px;
+            color: #8e819f;
+            font-size: 11px;
+            line-height: 1.8;
+            text-align: center;
+        }
+
+        footer {
+            position: relative;
+            z-index: 1;
+            padding: 22px 18px 30px;
+            color: #7f728f;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .navbar {
+                padding: 14px 18px;
+            }
+
+            .brand {
+                font-size: 20px;
+            }
+
+            .nav-link {
+                padding: 9px 10px;
+                font-size: 11px;
             }
 
             main {
-                padding: 22px 18px;
-                margin: 15px auto;
+                width: calc(100% - 26px);
+                margin-top: 34px;
             }
 
-            h1 {
-                font-size: 25px;
+            .field-grid {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 19px;
+            }
+
+            .field.full {
+                grid-column: auto;
+            }
+
+            .form-card {
+                border-radius: 19px;
+            }
+
+            .actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
 
 <body>
-<main>
-    <div class="brand">link<span>hub.</span></div>
 
-    <h1>Edit your profile</h1>
-    <p class="subtitle">
-        Keep your professional profile updated and showcase your work.
-    </p>
+    <div class="orb orb-one"></div>
+    <div class="orb orb-two"></div>
+    <div class="orb orb-three"></div>
 
-    {% with messages = get_flashed_messages() %}
-        {% for message in messages %}
-            <p class="error">{{ message }}</p>
-        {% endfor %}
-    {% endwith %}
-
-    <form method="POST">
-        <h2>Personal Information</h2>
-        <p class="hint">Tell visitors who you are and what you do.</p>
-
-        <label for="name">Full name</label>
-        <input
-            type="text"
-            id="name"
-            name="name"
-            value="{{ user.name }}"
-            maxlength="80"
-            autocomplete="name"
-            required
-        >
-
-        <label for="role">Professional headline</label>
-        <input
-            type="text"
-            id="role"
-            name="role"
-            value="{{ user.role }}"
-            maxlength="100"
-            placeholder="e.g. AIML Student | Aspiring Developer"
-            required
-        >
-
-        <label for="bio">About me</label>
-        <textarea
-            id="bio"
-            name="bio"
-            maxlength="500"
-            placeholder="Write a short introduction about yourself..."
-            required
-        >{{ user.bio }}</textarea>
-
-        <hr class="divider">
-
-        <h2>Professional Links</h2>
-        <p class="hint">
-            Share your coding work and professional network.
-            Both links are optional.
-        </p>
-
-        <label for="github_url">GitHub Profile</label>
-        <input
-            type="url"
-            id="github_url"
-            name="github_url"
-            value="{{ user.github_url or '' }}"
-            placeholder="https://github.com/yourusername"
-            maxlength="300"
-        >
-
-        <label for="linkedin_url">LinkedIn Profile</label>
-        <input
-            type="url"
-            id="linkedin_url"
-            name="linkedin_url"
-            value="{{ user.linkedin_url or '' }}"
-            placeholder="https://www.linkedin.com/in/yourusername"
-            maxlength="300"
-        >
-
-        <button class="save-button" type="submit">
-            Save Changes
-        </button>
-    </form>
-
-    <div class="back-links">
-        <a href="{{ url_for('dashboard') }}">← Back to dashboard</a>
-
-        <a href="{{ url_for('public_profile', username=user.username) }}">
-            View public profile ↗
+    <header class="navbar">
+        <a class="brand" href="{{ url_for('dashboard') }}">
+            <span class="brand-icon">✦</span>
+            <span>LinkHub</span>
         </a>
-    </div>
-</main>
+
+        <nav class="nav-right" aria-label="Main navigation">
+            <a class="nav-link" href="{{ url_for('dashboard') }}">
+                ← Dashboard
+            </a>
+            <a class="nav-link active"
+               href="{{ url_for('edit_profile') }}"
+               aria-current="page">
+                Edit Profile
+            </a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-heading">
+            <div class="eyebrow">
+                <span class="eyebrow-dot"></span>
+                YOUR DIGITAL IDENTITY
+            </div>
+
+            <h1>
+                Make it <span class="gradient-text">yours.</span>
+            </h1>
+
+            <p class="subtitle">
+                Update your details, tell your story, and keep your portfolio
+                looking like you. Your changes will appear on your public profile
+                after you save them.
+            </p>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container" aria-live="polite">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category | e }}">
+                            <span aria-hidden="true">
+                                {% if category == 'success' %}
+                                    ✓
+                                {% elif category == 'error' or category == 'danger' %}
+                                    !
+                                {% elif category == 'warning' %}
+                                    ⚠
+                                {% else %}
+                                    ✦
+                                {% endif %}
+                            </span>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="form-card">
+            <form method="POST" action="{{ url_for('edit_profile') }}">
+
+                <div class="section-title">
+                    <span class="section-icon">✧</span>
+                    <div>
+                        Basic information
+                        <p class="section-subtitle">
+                            The first things people see on your portfolio.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="field-grid">
+
+                    <div class="field">
+                        <label for="name">
+                            Full name <span class="optional">Required</span>
+                        </label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">♙</span>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                maxlength="100"
+                                value="{{ user['name'] or '' }}"
+                                placeholder="Your name"
+                                autocomplete="name"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="role">
+                            Professional role
+                            <span class="optional">Optional</span>
+                        </label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">⌘</span>
+                            <input
+                                type="text"
+                                id="role"
+                                name="role"
+                                maxlength="150"
+                                value="{{ user['role'] or '' }}"
+                                placeholder="e.g. AI/ML Student"
+                                autocomplete="organization-title">
+                        </div>
+                    </div>
+
+                    <div class="field full">
+                        <label for="bio">
+                            About you <span class="optional">Optional</span>
+                        </label>
+                        <textarea
+                            id="bio"
+                            name="bio"
+                            maxlength="1000"
+                            placeholder="Share your interests, skills, goals, and what you're building...">{{ user['bio'] or '' }}</textarea>
+                        <div class="char-count">
+                            <span id="bioCount">0</span>/1000 characters
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="section-title">
+                    <span class="section-icon">↗</span>
+                    <div>
+                        Your links
+                        <p class="section-subtitle">
+                            Help visitors discover your work and connect with you.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="field-grid">
+
+                    <div class="field full">
+                        <label for="github_url">
+                            GitHub profile
+                            <span class="optional">Optional</span>
+                        </label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">⌘</span>
+                            <input
+                                type="url"
+                                id="github_url"
+                                name="github_url"
+                                value="{{ user['github_url'] or '' }}"
+                                placeholder="https://github.com/username"
+                                autocomplete="url">
+                        </div>
+                        <p class="field-hint">
+                            Share your repositories and coding projects.
+                        </p>
+                    </div>
+
+                    <div class="field full">
+                        <label for="linkedin_url">
+                            LinkedIn profile
+                            <span class="optional">Optional</span>
+                        </label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">in</span>
+                            <input
+                                type="url"
+                                id="linkedin_url"
+                                name="linkedin_url"
+                                value="{{ user['linkedin_url'] or '' }}"
+                                placeholder="https://www.linkedin.com/in/username"
+                                autocomplete="url">
+                        </div>
+                    </div>
+
+                    <div class="field full">
+                        <label for="instagram_url">
+                            Instagram profile
+                            <span class="optional">Optional</span>
+                        </label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">◎</span>
+                            <input
+                                type="url"
+                                id="instagram_url"
+                                name="instagram_url"
+                                value="{{ user['instagram_url'] or '' }}"
+                                placeholder="https://www.instagram.com/username"
+                                autocomplete="url">
+                        </div>
+                    </div>
+
+                    <div class="field full">
+                        <label for="resume_url">
+                            Resume link
+                            <span class="optional">Optional</span>
+                        </label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">▤</span>
+                            <input
+                                type="url"
+                                id="resume_url"
+                                name="resume_url"
+                                value="{{ user['resume_url'] or '' }}"
+                                placeholder="https://example.com/your-resume.pdf"
+                                autocomplete="url">
+                        </div>
+                        <p class="field-hint">
+                            Add a publicly accessible resume URL so visitors can
+                            view your resume. Check its sharing permissions first.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">
+                        <span>✦</span>
+                        Save Changes
+                        <span aria-hidden="true">→</span>
+                    </button>
+
+                    <a href="{{ url_for('dashboard') }}"
+                       class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+
+                <p class="footer-note">
+                    ✧ Your profile, your story. Keep it authentic and up to date.
+                </p>
+
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        Made with care · LinkHub
+    </footer>
+
+    <script>
+        // Live character counter for the bio field.
+        const bioField = document.getElementById('bio');
+        const bioCount = document.getElementById('bioCount');
+
+        function updateBioCount() {
+            bioCount.textContent = bioField.value.length;
+        }
+
+        bioField.addEventListener('input', updateBioCount);
+        updateBioCount();
+
+        // Gentle mouse-following glow on the form card.
+        const formCard = document.querySelector('.form-card');
+
+        formCard.addEventListener('pointermove', function (event) {
+            const rect = formCard.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            formCard.style.background = `
+                radial-gradient(
+                    350px circle at ${x}px ${y}px,
+                    rgba(167,139,250,0.075),
+                    transparent 75%
+                ),
+                rgba(30,20,52,0.88)
+            `;
+        });
+
+        formCard.addEventListener('pointerleave', function () {
+            formCard.style.background = 'rgba(30,20,52,0.78)';
+        });
+
+        // Prevent accidental double submission.
+        const profileForm = document.querySelector('form');
+        const saveButton = profileForm.querySelector('.btn-primary');
+
+        profileForm.addEventListener('submit', function () {
+            if (!profileForm.checkValidity()) {
+                return;
+            }
+
+            saveButton.disabled = true;
+            saveButton.style.opacity = '0.75';
+            saveButton.style.cursor = 'wait';
+            saveButton.innerHTML = '<span class="save-spinner" aria-hidden="true">◌</span> Saving...';
+
+            const spinnerStyle = document.createElement('style');
+            spinnerStyle.textContent = `
+                .save-spinner {
+                    display: inline-block;
+                    animation: spin 0.8s linear infinite;
+                }
+            `;
+            document.head.appendChild(spinnerStyle);
+        });
+    </script>
+
 </body>
 </html>
